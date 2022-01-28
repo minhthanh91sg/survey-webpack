@@ -2,7 +2,8 @@ const path = require('path');
 const webpack = require('webpack');
 
 module.exports = {
-  entry: './src/index.js',
+  mode: 'development',
+  entry: ["regenerator-runtime/runtime.js",'./src/index.js'],
   output: {
     filename: 'bundle.js',
     path: path.resolve(__dirname, 'dist'),
@@ -24,7 +25,7 @@ module.exports = {
                   ['@babel/preset-env', {
                     "targets": "defaults" 
                   }],
-                  '@babel/preset-react'
+                  ["@babel/preset-react", {"runtime": "automatic"}]
                 ]
               }
             }]

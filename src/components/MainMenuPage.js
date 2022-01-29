@@ -18,7 +18,7 @@ export const MainMenuPage = () => {
         </Button>
       </div>
     );
-  } else if (menuState == "SurveyorView") {
+  } else if (menuState == "Participant") {
     return (
       <div>
         <Button onClick={() => setState("Main")}>

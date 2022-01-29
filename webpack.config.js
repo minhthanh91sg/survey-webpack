@@ -60,7 +60,8 @@ module.exports = {
     //"util": require.resolve("util/"),
     "path": require.resolve("path-browserify"),
     "buffer": require.resolve("buffer"),
-    "worker_threads": false
+    "worker_threads": false,
+    "ethers": require.resolve("ethers/")
     },
     alias: {
         process: "process/browser"

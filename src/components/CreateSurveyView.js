@@ -6,7 +6,7 @@ import semaphore from '../contracts/Semaphore.json';
 import survey from '../contracts/Survey.json';
 import platform from '../contracts/Platform.json';
 
-const platformAddress = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
+const platformAddress = "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512";
 
 export const CreateSurveyView = (props) => {
   const [inputs, setInputs] = useState([
@@ -58,7 +58,10 @@ export const CreateSurveyView = (props) => {
         return input.question;
       });
       const participantAddress = [
-        "0x70997970c51812dc3a010c7d01b50e0d17dc79c8"
+        "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+        "0x3c44cdddb6a900fa2b585dd299e03d12fa4293bc",
+        "0x90f79bf6eb2c4f870365e785982e1f101e93b906",
+        "0x15d34aaf54267db7d7c367839aaf71a00a2c6a65"
       ];
       const surveyContract = 
         await surveyFactory.deploy(
@@ -75,11 +78,11 @@ export const CreateSurveyView = (props) => {
       console.log("add nullifier start");
       await surveyContract.addExternalNullifier();
       console.log("add nullifier finish");
-      // console.log("insert new survey to platform");
-      // const platformContract = new ethers.Contract(platformAddress, platform.abi, signer);
-      // const addSurveyTx = await platformContract.addExistingSurvey(participantAddress, surveyContract.address);
-      // await addSurveyTx.wait()
-      // console.log("complete insert new survey");
+      console.log("insert new survey to platform");
+      const platformContract = new ethers.Contract(platformAddress, platform.abi, signer);
+      const addSurveyTx = await platformContract.addExistingSurvey(participantAddress, surveyContract.address);
+      await addSurveyTx.wait()
+      console.log("complete insert new survey");
     }
   };
 

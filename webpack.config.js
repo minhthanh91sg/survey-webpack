@@ -1,5 +1,6 @@
 const path = require('path');
 const webpack = require('webpack');
+const CopyPlugin = require("copy-webpack-plugin");
 
 module.exports = {
   mode: 'development',
@@ -14,22 +15,26 @@ module.exports = {
   },
   module: {
     rules: [
-        {
-            test: /\.(jsx|js)$/,
-            include: path.resolve(__dirname, 'src'),
-            exclude: /node_modules/,
-            use: [{
-              loader: 'babel-loader',
-              options: {
-                presets: [
-                  ['@babel/preset-env', {
-                    "targets": "defaults" 
-                  }],
-                  ["@babel/preset-react", {"runtime": "automatic"}]
-                ]
-              }
-            }]
-        }
+      {
+        test: /\.(jsx|js)$/,
+        include: path.resolve(__dirname, 'src'),
+        exclude: /node_modules/,
+        use: [{
+          loader: 'babel-loader',
+          options: {
+            presets: [
+              ['@babel/preset-env', {
+                "targets": "defaults" 
+              }],
+              ["@babel/preset-react", {"runtime": "automatic"}]
+            ]
+          }
+        }]
+      },
+      {
+        test: /\.css$/i,
+        use: ["style-loader", "css-loader"],
+      },
     ],
   },
   plugins: [
@@ -42,6 +47,11 @@ module.exports = {
         Buffer: ['buffer', 'Buffer'],
     }),
     new webpack.HotModuleReplacementPlugin(),
+    new CopyPlugin({
+      patterns: [
+        { from: "public", to: path.resolve(__dirname, 'dist/public') },
+      ],
+    }),
   ],
   resolve: {
     fallback: {

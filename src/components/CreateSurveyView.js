@@ -6,7 +6,7 @@ import semaphore from '../contracts/Semaphore.json';
 import survey from '../contracts/Survey.json';
 import platform from '../contracts/Platform.json';
 
-const platformAddress = "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512";
+const platformAddress = "0x0DCd1Bf9A1b36cE34237eEaFef220932846BCD82";
 
 export const CreateSurveyView = (props) => {
   const [inputs, setInputs] = useState([

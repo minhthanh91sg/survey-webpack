@@ -1,16 +1,22 @@
 import 'regenerator-runtime/runtime';
 import React, { useState } from 'react';
-import { ethers, providers } from 'ethers';
-import { Button } from '@material-ui/core';
+import { Button, ThemeProvider, Box, Paper, createTheme } from '@material-ui/core';
 import { MainMenuPage } from "./components/MainMenuPage.js"
 
-// import { 
-//     genIdentity, 
-//     genIdentityCommitment
-//   } from "libsemaphore";
-
-// const identity = genIdentity();
-// const identityCommitment = genIdentityCommitment(identity);
+const theme = createTheme({
+  palette: {
+    type: "light",
+    primary: {
+      main: '#374785',
+    },
+    secondary: {
+      main: '#A8D0E6',
+    },
+    error: {
+      main: '#F76C6C',
+    },
+  }
+})
 
 function App() {
     const [currentAccount, setCurrentAccount] = useState(null);
@@ -42,16 +48,32 @@ function App() {
   
     const connectWalletButton = () => {
       return(
-        <Button onClick={connectWalletHandler}>
+        <Button 
+          onClick={connectWalletHandler}
+          color="primary"
+          variant="contained"
+        >
           Connect to your Metamask
         </Button>
-    );
+      );
     }
-    console.log("kasdjfaksjdfka");
     return (
-      <div>
-        {currentAccount ? <MainMenuPage/> : connectWalletButton()}
-      </div>
+      <ThemeProvider theme={theme}>
+        <Box
+          textAlign="center"
+          sx={{
+            height: "100vh",
+            width: "100vw",
+            backgroundColor: "secondary.light",
+            justifyContent: "center"
+          }}
+        >
+
+          {currentAccount ? <MainMenuPage /> : connectWalletButton()}
+
+        </Box>
+      </ThemeProvider>
+      
     )
 }
 

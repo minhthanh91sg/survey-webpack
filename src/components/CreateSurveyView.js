@@ -1,7 +1,7 @@
 import { 
   TextField, 
   Button, 
-  Container, 
+  Box, 
   FormGroup, 
   List, 
   ListItem,
@@ -12,22 +12,22 @@ import AddIcon from "@material-ui/icons/Add";
 import RemoveIcon from "@material-ui/icons/Remove";
 import React, { useState } from "react";
 import { v4 as uuidv4 } from "uuid";
-import { ContractFactory, ethers, providers } from 'ethers';
+import { ContractFactory } from 'ethers';
 import semaphore from '../contracts/Semaphore.json';
 import survey from '../contracts/Survey.json';
 import platform from '../contracts/Platform.json';
-
-const platformAddress = "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512";
+const address = require('../../public/address.json');
 
 export const CreateSurveyView = (props) => {
   const [inputs, setInputs] = useState([
     { "id": uuidv4(), "question": "" },
   ]);
+  const [participants, setParticipants] = useState([]);
 
   const handleChange = (id, event) => {
     const newInputFields = inputs.map(input => {
       if(id === input.id) {
-        input["question"] = event.target.value
+        input["question"] = event.target.value;
       }
       return input;
     })
@@ -43,6 +43,12 @@ export const CreateSurveyView = (props) => {
 
   const handleAddFields = () => {
     setInputs([...inputs, { id: uuidv4(), question: "" }])
+  }
+
+  const handleParticipantInput = (event) => {
+    const values = event.target.value.split(",");
+    const combined = [...participants, ...values];
+    setParticipants(combined);
   }
 
   const handleSubmit = async (event) => {
@@ -68,16 +74,11 @@ export const CreateSurveyView = (props) => {
       const questions = inputs.map(input => {
         return input.question;
       });
-      const participantAddress = [
-        "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
-        "0x3c44cdddb6a900fa2b585dd299e03d12fa4293bc",
-        "0x90f79bf6eb2c4f870365e785982e1f101e93b906",
-        "0x15d34aaf54267db7d7c367839aaf71a00a2c6a65"
-      ];
+
       const surveyContract = 
         await surveyFactory.deploy(
           questions,
-          participantAddress,
+          participants,
           10000,
           "test",
           semaphoreAddress,
@@ -90,7 +91,7 @@ export const CreateSurveyView = (props) => {
       await surveyContract.addExternalNullifier();
       console.log("add nullifier finish");
       console.log("insert new survey to platform");
-      const platformContract = new ethers.Contract(platformAddress, platform.abi, signer);
+      const platformContract = new ethers.Contract(address.Platform, platform.abi, signer);
       const addSurveyTx = await platformContract.addExistingSurvey(participantAddress, surveyContract.address);
       await addSurveyTx.wait()
       console.log("complete insert new survey");
@@ -98,7 +99,7 @@ export const CreateSurveyView = (props) => {
   };
 
   return (
-    <Container>
+    <Box>
       <Typography variant="h3">
         CREATE NEW SURVEY
       </Typography>
@@ -125,6 +126,14 @@ export const CreateSurveyView = (props) => {
             </ListItem>
           )) }
         </List>
+        <TextField 
+          multiline
+          fullWidth
+          name="Participants accounts"
+          label="Participants"
+          variant="filled"
+          onChange={event => handleParticipantInput(event)}
+        />
         <Button
           variant="contained" 
           color="primary" 
@@ -136,6 +145,6 @@ export const CreateSurveyView = (props) => {
           Submit
         </Button>
       </FormGroup>
-    </Container>
+    </Box>
   )
 }

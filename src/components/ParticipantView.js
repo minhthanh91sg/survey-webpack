@@ -15,8 +15,7 @@ import respondentView from '../contracts/RespondentView.json';
 import platform from '../contracts/Platform.json';
 import { ethers } from 'ethers';
 import { TextField, Button, Container } from "@material-ui/core";
-
-const platformAddress = "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512";
+const address = require('../../public/address.json');
 
 export const ParticipantView = () => {
   const [surveys, setSurveys] = useState([]);
@@ -26,7 +25,7 @@ export const ParticipantView = () => {
     if (ethereum) {
       const provider = new ethers.providers.Web3Provider(ethereum);
       const signer = provider.getSigner();
-      const platformContract = new ethers.Contract(platformAddress, platform.abi, signer);
+      const platformContract = new ethers.Contract(address.Platform, platform.abi, signer);
       console.log("Signing in as participant...");
       const signInTx = await platformContract.signInAsParticipant();
       console.log("Before waiting");

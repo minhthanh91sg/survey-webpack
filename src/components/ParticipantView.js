@@ -17,11 +17,11 @@ import respondentView from '../contracts/RespondentView.json';
 import platform from '../contracts/Platform.json';
 import { ContractFactory, ethers, providers } from 'ethers';
 import { TextField, Button, Container } from "@material-ui/core";
-import { generateWitness } from "../semaphore_js/generate_witness";
 import * as snarkjs from 'snarkjs'
-import { storage, hashers, tree } from 'semaphore-merkle-tree'
+import { storage, hashers, tree } from 'semaphore-merkle-tree';
+import JSBI from "jsbi";
 
-const platformAddress = "0x0DCd1Bf9A1b36cE34237eEaFef220932846BCD82";
+const platformAddress = "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512";
 const MerkleTree = tree.MerkleTree
 const MemStorage = storage.MemStorage
 const MimcSpongeHasher = hashers.MimcSpongeHasher
@@ -57,19 +57,19 @@ export const ParticipantView = () => {
       }
       
       // the part below inserts identity
-      // const surveyContract = new ethers.Contract(surveyAddresses[0], survey.abi, signer);
+      const surveyContract = new ethers.Contract(surveyAddresses[0], survey.abi, signer);
 
-      // const identity = genIdentity();
-      // console.log(identity);
-      // const identityCommitment = genIdentityCommitment(identity);
-      // console.log(identityCommitment);
-      // const insertIdentityTx = await surveyContract.insertIdentity(identityCommitment);
-      // await insertIdentityTx.wait();
-      // console.log(serialiseIdentity(identity));
-      // window.localStorage.setItem(surveyAddresses[0], serialiseIdentity(identity));
+      const identity = genIdentity();
+      console.log(identity);
+      const identityCommitment = genIdentityCommitment(identity);
+      console.log(identityCommitment);
+      const insertIdentityTx = await surveyContract.insertIdentity(identityCommitment);
+      await insertIdentityTx.wait();
+      console.log(serialiseIdentity(identity));
+      window.localStorage.setItem(surveyAddresses[0], serialiseIdentity(identity));
 
-      // const serialized = serialiseIdentity(identity);
-      // console.log("Unserialized identity: ", unSerialiseIdentity(serialized));
+      const serialized = serialiseIdentity(identity);
+      console.log("Unserialized identity: ", unSerialiseIdentity(serialized));
       setSurveys(updatedSurveyList);
     }
   }
@@ -90,66 +90,86 @@ export const ParticipantView = () => {
       console.log("external nullifier", en);
 
       //////////////Cathieso////////////
-      const idCommitmentsAsBigInts = []
-      for (let idc of idCommitments) {
-          idCommitmentsAsBigInts.push(snarkjs.bigInt(idc.toString()))
-      }
+    //   const idCommitmentsAsBigInts = []
+    //   for (let idc of idCommitments) {
+    //       idCommitmentsAsBigInts.push(snarkjs.bigInt(idc.toString()))
+    //   }
 
-    const identityCommitment = genIdentityCommitment(identity)
-    const index = idCommitmentsAsBigInts.indexOf(identityCommitment)
-    const tree = await genTree(20, idCommitments)
+    // const identityCommitment = genIdentityCommitment(identity)
+    // const index = idCommitmentsAsBigInts.indexOf(identityCommitment)
+    // const tree = await genTree(20, idCommitments)
 
-    const identityPath = await tree.path(index)
+    // const identityPath = await tree.path(index)
 
-    const { identityPathElements, identityPathIndex } = await genPathElementsAndIndex(
-        tree,
-        identityCommitment,
-    )
+    // const { identityPathElements, identityPathIndex } = await genPathElementsAndIndex(
+    //     tree,
+    //     identityCommitment,
+    // )
 
-    const signalHash = keccak256HexToBigInt("signal")
+    // console.log("identity path elements", identityPathElements);
+    // console.log("identity path index", identityPathIndex);
+    // const signalHash = keccak256HexToBigInt(transformSignalToHex("signal"))
+    // console.log("Participant view identity: ", identity);
+    // const input = {
+    //   signal_hash: signalHash,
+    //   external_nullifier: en,
+    //   identity_nullifier: identity.identityNullifier,
+    //   identity_trapdoor: identity.identityTrapdoor,
+    //   identity_path_index:identityPathIndex,
+    //   path_elements: identityPathElements
+    // }
 
-    const input = {
-      signal_hash: signalHash,
-      external_nullifier: en,
-      identity_nullifier: identity.identity_nullifier,
-      identity_trapdoor: identity.identity_trapdoor,
-      identity_path_index:identityPathIndex,
-      path_elements: identityPathElements
-    }
-    let witness = await generateWitness(input).then()
-      .catch((error) => {
-          console.error(error);
-          generateWitnessSuccess = false;
-    });
+    // let witness = await generateWitness(input).then()
+    //   .catch((error) => {
+    //       console.error(error);
+    //       generateWitnessSuccess = false;
+    // });
     
-    console.log("this is the witness", witness);
+    // console.log("this is the witness", witness);
 
 
       //////////////////////////////////
       ////////////////Semaphore-ui/////////
-      // const circuit = genCircuit(cirDef);
-      // console.log("Generating witness...");
-      // const result = await genWitness(
-      //   "test",
-      //   circuit,
-      //   // 3 items
-      //   identity,
-      //   leaves,
-      //   // from survey creator
-      //   20,
-      //   BigInt(en.toString()),
-      // )
-      // console.log("Complete generating witness");    
-      // const witness = result.witness
-      // console.log("Proving...");
-      // const provingKey = new Uint8Array(await (await fetch('../circuits/semaphore_0001.zkey')).arrayBuffer());
-      // const proof = await genProof(witness, provingKey);
-      // console.log("Complete proving", proof);
+      console.log("Check en.toString", BigInt(en.toString()));
+      const cirDef = await 
+        (await fetch("/public/circuit.json"))
+        .json();
+      const circuit = genCircuit(cirDef);
+      console.log("Generating witness...");
+      const result = await genWitness(
+        "test",
+        circuit,
+        // 3 items
+        identity,
+        idCommitments,
+        // from survey creator
+        20,
+        BigInt(en.toString()),
+      )
+      console.log("Complete generating witness"); 
+      console.log("full result: ", result);
+      const witness = result.witness;
+      console.log("Proving...");
+      const provingKey = new Uint8Array(await (await fetch("/public/proving_key.bin")).arrayBuffer());
+      const proof = await genProof(witness, provingKey);
+      console.log("Complete proving", proof);
 
-      // const editedPublicSignals = unstringifyBigInts(publicSignals);
-      // const editedProof = unstringifyBigInts(proof);
-      // const calldata = await groth16.exportSolidityCallData(editedProof, editedPublicSignals);
-      ///////////////////////////////
+      const publicSignals = genPublicSignals(witness, circuit);
+      const params = genBroadcastSignalParams(result, proof, publicSignals);
+      console.log("genBroadcastSignalParams: ", params);
+      console.log("Updating survey result...");
+      const tx = await surveyContract.updateSurveyResult(
+        ["q1"],
+        [5],
+        ethers.utils.toUtf8Bytes("test"),
+        params.proof,
+        params.root,
+        params.nullifiersHash
+      );
+      
+      const receipt = await tx.wait();
+      console.log("Complete update survey result...");
+      console.log(receipt);
     }
   }
 
@@ -206,7 +226,14 @@ export const ParticipantView = () => {
       return signalHash
   }
 
+  const transformSignalToHex = (signal) => {
+    return ethers.utils.hexlify(
+      ethers.utils.toUtf8Bytes(signal),
+    );
+  }
+
   const beBuff2int = (buff) => {
+    
     let res = snarkjs.bigInt.zero
     for (let i=0; i<buff.length; i++) {
         const n = snarkjs.bigInt(buff[buff.length - i - 1])
@@ -232,7 +259,10 @@ export const ParticipantView = () => {
       )
     })
   }
-
+  const num1 = JSBI.BigInt(2);
+  const num2 = JSBI.BigInt(64);
+  const pow = JSBI.exponentiate(num1, num2);
+  console.log("Using JSBI", BigInt(String(pow)));
   return (
     <div>
       <Button onClick={handleSignIn}>Add</Button>

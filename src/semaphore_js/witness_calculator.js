@@ -1,3 +1,5 @@
+const JSBI = require('jsbi');
+
 module.exports = async function builder(code, options) {
 
     options = options || {};
@@ -95,6 +97,7 @@ class WitnessCalculator {
     }
 
     async _doCalculateWitness(input, sanityCheck) {
+        console.log("_doCalculateWitness: input ", input);
 	//input is assumed to be a map from signals to arrays of bigints
         this.instance.exports.init((this.sanityCheck || sanityCheck) ? 1 : 0);
         const keys = Object.keys(input);
@@ -163,8 +166,10 @@ class WitnessCalculator {
 
     async calculateWTNSBin(input, sanityCheck) {
 
+        console.log("Before call _doCalculateWitness", input);
         const buff32 = new Uint32Array(this.witnessSize*this.n32+this.n32+11);
 	const buff = new  Uint8Array( buff32.buffer);
+    console.log("Before call _doCalculateWitness", input);
         await this._doCalculateWitness(input, sanityCheck);
   
 	//"wtns"
@@ -274,7 +279,10 @@ function flatArray(a) {
 }
 
 function fnvHash(str) {
-    const uint64_max = BigInt(2) ** BigInt(64);
+    const num1 = JSBI.BigInt(2);
+    const num2 = JSBI.BigInt(64);
+    const pow = JSBI.exponentiate(num1, num2);
+    const uint64_max = BigInt(String(pow));
     let hash = BigInt("0xCBF29CE484222325");
     for (var i = 0; i < str.length; i++) {
 	hash ^= BigInt(str[i].charCodeAt());

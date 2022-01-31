@@ -1,9 +1,17 @@
 import 'regenerator-runtime/runtime';
 import React, { useState } from 'react';
-import { Button, ThemeProvider, Box, Paper, createTheme } from '@material-ui/core';
+import { Button, ThemeProvider, Box, createTheme, Avatar } from '@material-ui/core';
 import { MainMenuPage } from "./components/MainMenuPage.js"
+import { bgcolor } from '@material-ui/system';
 
 const theme = createTheme({
+  typography: {
+    "fontFamily": `"Roboto", "Helvetica", "Arial", sans-serif`,
+    "fontSize": 14,
+    "fontWeightLight": 300,
+    "fontWeightRegular": 400,
+    "fontWeightMedium": 500
+  },
   palette: {
     type: "light",
     primary: {
@@ -11,6 +19,7 @@ const theme = createTheme({
     },
     secondary: {
       main: '#A8D0E6',
+      light: 'rgb(185, 217, 235)'
     },
     error: {
       main: '#F76C6C',
@@ -48,13 +57,26 @@ function App() {
   
     const connectWalletButton = () => {
       return(
-        <Button 
-          onClick={connectWalletHandler}
-          color="primary"
-          variant="contained"
-        >
-          Connect to your Metamask
-        </Button>
+        <>
+          <Box sx={{ p: 1, m: 1 }}>
+            <Avatar 
+              src="/public/Pretzel-Ninja-Leap.svg"
+              alt="Ninja Survey" 
+              style={{ width: "100px", height: "100px" }}
+              variant='square'
+            />
+          </Box>
+          <Button 
+            onClick={connectWalletHandler}
+            color="primary"
+            variant="contained"
+            size="medium"
+            style={{ height: 40 }}
+            display="inline-flex"
+          >
+            Connect to your Metamask
+          </Button>
+        </>
       );
     }
     return (
@@ -62,18 +84,17 @@ function App() {
         <Box
           textAlign="center"
           sx={{
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+            alignItems: "center",
+            bgcolor: "secondary.main",
             height: "100vh",
-            width: "100vw",
-            backgroundColor: "secondary.light",
-            justifyContent: "center"
           }}
         >
-
           {currentAccount ? <MainMenuPage /> : connectWalletButton()}
-
         </Box>
       </ThemeProvider>
-      
     )
 }
 

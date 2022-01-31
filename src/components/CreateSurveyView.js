@@ -1,4 +1,15 @@
-import { TextField, Button, Container } from "@material-ui/core";
+import { 
+  TextField, 
+  Button, 
+  Container, 
+  FormGroup, 
+  List, 
+  ListItem,
+  IconButton,
+  Typography
+} from "@material-ui/core";
+import AddIcon from "@material-ui/icons/Add";
+import RemoveIcon from "@material-ui/icons/Remove";
 import React, { useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { ContractFactory, ethers, providers } from 'ethers';
@@ -88,23 +99,43 @@ export const CreateSurveyView = (props) => {
 
   return (
     <Container>
-      <h1>Add New Question</h1>
-      <form className="classes.root">
-        { inputs.map((input, index) => (
-          <div key={input.id}>
-            <TextField 
-              name="New Question"
-              label={`Question ${index + 1}`}
-              variant="filled"
-              value={input.question}
-              onChange={event => handleChange(input.id, event)}
-            />
-            <Button onClick={handleAddFields}>Add</Button>
-            <Button disabled={inputs.length === 1} onClick={() => handleRemoveFields(index)}>Remove</Button>
-          </div>
-        )) }
-        <Button href="" variant="contained" color="primary" type="submit" onClick={handleSubmit}>Submit</Button>
-      </form>
+      <Typography variant="h3">
+        CREATE NEW SURVEY
+      </Typography>
+      <FormGroup>
+        <List>
+          { inputs.map((input, index) => (
+            <ListItem key={input.id}>            
+              <TextField
+                multiline
+                fullWidth
+                name="New Question"
+                label={`Question ${index + 1}`}
+                variant="filled"
+                value={input.question}
+                onChange={event => handleChange(input.id, event)}
+              />
+              <IconButton onClick={handleAddFields}><AddIcon /></IconButton>
+              <IconButton 
+                disabled={inputs.length === 1} 
+                onClick={() => handleRemoveFields(index)}
+              >
+                <RemoveIcon />
+              </IconButton>
+            </ListItem>
+          )) }
+        </List>
+        <Button
+          variant="contained" 
+          color="primary" 
+          type="submit"
+          onClick={handleSubmit}
+          size="medium"
+          display="inline-block"
+        >
+          Submit
+        </Button>
+      </FormGroup>
     </Container>
   )
 }

@@ -1,11 +1,9 @@
 import { 
-  Identity,
   genIdentity,
   genIdentityCommitment,
   genCircuit,
   serialiseIdentity,
   genWitness,
-  genExternalNullifier,
   genProof,
   genPublicSignals,
   genBroadcastSignalParams,
@@ -15,21 +13,13 @@ import { useState } from "react";
 import survey from '../contracts/Survey.json';
 import respondentView from '../contracts/RespondentView.json';
 import platform from '../contracts/Platform.json';
-import { ContractFactory, ethers, providers } from 'ethers';
+import { ethers } from 'ethers';
 import { TextField, Button, Container } from "@material-ui/core";
-import * as snarkjs from 'snarkjs'
-import { storage, hashers, tree } from 'semaphore-merkle-tree';
-import JSBI from "jsbi";
 
 const platformAddress = "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512";
-const MerkleTree = tree.MerkleTree
-const MemStorage = storage.MemStorage
-const MimcSpongeHasher = hashers.MimcSpongeHasher
 
 export const ParticipantView = () => {
-  const [surveys, setSurveys] = useState([{
-    address: "abc", name: "tcr"
-  }]);
+  const [surveys, setSurveys] = useState([]);
 
   const handleSignIn = async () => {
     const { ethereum } = window;
@@ -89,48 +79,6 @@ export const ParticipantView = () => {
       const en = await surveyContract.getExternalNullifier();
       console.log("external nullifier", en);
 
-      //////////////Cathieso////////////
-    //   const idCommitmentsAsBigInts = []
-    //   for (let idc of idCommitments) {
-    //       idCommitmentsAsBigInts.push(snarkjs.bigInt(idc.toString()))
-    //   }
-
-    // const identityCommitment = genIdentityCommitment(identity)
-    // const index = idCommitmentsAsBigInts.indexOf(identityCommitment)
-    // const tree = await genTree(20, idCommitments)
-
-    // const identityPath = await tree.path(index)
-
-    // const { identityPathElements, identityPathIndex } = await genPathElementsAndIndex(
-    //     tree,
-    //     identityCommitment,
-    // )
-
-    // console.log("identity path elements", identityPathElements);
-    // console.log("identity path index", identityPathIndex);
-    // const signalHash = keccak256HexToBigInt(transformSignalToHex("signal"))
-    // console.log("Participant view identity: ", identity);
-    // const input = {
-    //   signal_hash: signalHash,
-    //   external_nullifier: en,
-    //   identity_nullifier: identity.identityNullifier,
-    //   identity_trapdoor: identity.identityTrapdoor,
-    //   identity_path_index:identityPathIndex,
-    //   path_elements: identityPathElements
-    // }
-
-    // let witness = await generateWitness(input).then()
-    //   .catch((error) => {
-    //       console.error(error);
-    //       generateWitnessSuccess = false;
-    // });
-    
-    // console.log("this is the witness", witness);
-
-
-      //////////////////////////////////
-      ////////////////Semaphore-ui/////////
-      console.log("Check en.toString", BigInt(en.toString()));
       const cirDef = await 
         (await fetch("/public/circuit.json"))
         .json();
@@ -172,75 +120,6 @@ export const ParticipantView = () => {
       console.log(receipt);
     }
   }
-
-  const genTree = async (
-    treeDepth,
-    leaves,
-  ) => {
-
-      const tree = setupTree(treeDepth)
-
-      for (let i=0; i<leaves.length; i++) {
-          await tree.update(i, leaves[i].toString())
-      }
-
-      return tree
-  }
-
-  const setupTree = (
-    levels,
-    prefix = 'semaphore',
-  ) => {
-    const storage = new MemStorage()
-    const hasher = new MimcSpongeHasher()
-
-    return new MerkleTree(
-        prefix,
-        storage,
-        hasher,
-        levels,
-        ethers.utils.solidityKeccak256(['bytes'], [ethers.utils.toUtf8Bytes('Semaphore')]),
-    )
-  }
-
-  const genPathElementsAndIndex = async (tree, identityCommitment) => {
-    const leafIndex = await tree.element_index(identityCommitment)
-    const identityPath = await tree.path(leafIndex)
-    const identityPathElements = identityPath.path_elements
-    const identityPathIndex = identityPath.path_index
-
-    return { identityPathElements, identityPathIndex }
-  }
-
-  const keccak256HexToBigInt = (
-    signal,
-  ) => {
-      const signalAsBuffer = Buffer.from(signal.slice(2), 'hex')
-      const signalHashRaw = ethers.utils.solidityKeccak256(
-          ['bytes'],
-          [signalAsBuffer],
-      )
-      const signalHashRawAsBytes = Buffer.from(signalHashRaw.slice(2), 'hex');
-      const signalHash = beBuff2int(signalHashRawAsBytes.slice(0, 31))
-
-      return signalHash
-  }
-
-  const transformSignalToHex = (signal) => {
-    return ethers.utils.hexlify(
-      ethers.utils.toUtf8Bytes(signal),
-    );
-  }
-
-  const beBuff2int = (buff) => {
-    
-    let res = snarkjs.bigInt.zero
-    for (let i=0; i<buff.length; i++) {
-        const n = snarkjs.bigInt(buff[buff.length - i - 1])
-        res = res.add(n.shl(i*8))
-    }
-    return res
-  }
   
   const renderSurveys = () => {
     return surveys.map((survey, index) => {
@@ -259,10 +138,7 @@ export const ParticipantView = () => {
       )
     })
   }
-  const num1 = JSBI.BigInt(2);
-  const num2 = JSBI.BigInt(64);
-  const pow = JSBI.exponentiate(num1, num2);
-  console.log("Using JSBI", BigInt(String(pow)));
+
   return (
     <div>
       <Button onClick={handleSignIn}>Add</Button>

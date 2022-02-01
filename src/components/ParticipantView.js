@@ -14,40 +14,63 @@ import survey from '../contracts/Survey.json';
 import respondentView from '../contracts/RespondentView.json';
 import platform from '../contracts/Platform.json';
 import { ethers } from 'ethers';
-import { TextField, Button, Container } from "@material-ui/core";
+import { List, Button, ListItem } from "@material-ui/core";
+import { SurveyResponsePage } from "./SurveyResponsePage";
 const address = require('../../public/address.json');
 
 export const ParticipantView = () => {
   const [surveys, setSurveys] = useState([]);
-
+  const [loading, setLoading] = useState(false);
+  const [selectedSurvey, setSelectedSurvey] = useState(null);
+  
+  
   const handleSignIn = async () => {
-    const { ethereum } = window;
-    if (ethereum) {
-      const provider = new ethers.providers.Web3Provider(ethereum);
-      const signer = provider.getSigner();
-      const platformContract = new ethers.Contract(address.Platform, platform.abi, signer);
-      console.log("Signing in as participant...");
-      const signInTx = await platformContract.signInAsParticipant();
-      console.log("Before waiting");
-      await signInTx.wait();
-      console.log("Complete signing in as participant");
-      const viewAddress = await platformContract.getRespondentViewAddress();
-      console.log("Participant view address", viewAddress);
-
-      const respondentViewContract = new ethers.Contract(viewAddress, respondentView.abi, signer);
-      const surveyNames = await respondentViewContract.getSurveyNames();
-      console.log("Survey names: ", surveyNames);
-      const surveyAddresses = await respondentViewContract.getAllSurveyAddresses();
-      console.log("Survey addresses: ", surveyAddresses);
-      
-      const updatedSurveyList = [...surveys];
-      for (let i = 0; i < surveyAddresses.length; i += 1) {
-        updatedSurveyList.push({address: surveyAddresses[i], name: surveyNames[i]});
+    setLoading(true);
+    try {
+      const { ethereum } = window;
+      if (ethereum) {
+        const provider = new ethers.providers.Web3Provider(ethereum);
+        const signer = provider.getSigner();
+        const platformContract = new ethers.Contract(address.Platform, platform.abi, signer);
+        console.log("Signing in as participant...");
+        const signInTx = await platformContract.signInAsParticipant();
+        console.log("Before waiting");
+        await signInTx.wait();
+        console.log("Complete signing in as participant");
+        const viewAddress = await platformContract.getRespondentViewAddress();
+        console.log("Participant view address", viewAddress);
+  
+        const respondentViewContract = new ethers.Contract(viewAddress, respondentView.abi, signer);
+        const surveyNames = await respondentViewContract.getSurveyNames();
+        console.log("Survey names: ", surveyNames);
+        const surveyAddresses = await respondentViewContract.getAllSurveyAddresses();
+        console.log("Survey addresses: ", surveyAddresses);
+        
+        const updatedSurveyList = [...surveys];
+        for (let i = 0; i < surveyAddresses.length; i += 1) {
+          updatedSurveyList.push({address: surveyAddresses[i], name: surveyNames[i]});
+        }
+        
+        setSurveys(updatedSurveyList);
       }
-      
-      // the part below inserts identity
-      const surveyContract = new ethers.Contract(surveyAddresses[0], survey.abi, signer);
+    } catch (e) {
+      console.log(e.message);
+    }
+    setLoading(false);
+  }
 
+  const handleSelectSurvey = async (_address, _name) => {
+    const {ethereum } = window;
+    if (!ethereum) {
+      return;
+    }
+    const provider = new ethers.providers.Web3Provider(ethereum);
+    const signer = provider.getSigner();
+    // the part below inserts identity
+    const surveyContract = new ethers.Contract(_address, survey.abi, signer);
+    const _surveyQuestions = await surveyContract.getSurveyQuestions();
+    // TODO: replace try/catch with backend variable AlreadyInsertedIdentityCommitment
+    try {
       const identity = genIdentity();
       console.log(identity);
       const identityCommitment = genIdentityCommitment(identity);
@@ -55,94 +78,57 @@ export const ParticipantView = () => {
       const insertIdentityTx = await surveyContract.insertIdentity(identityCommitment);
       await insertIdentityTx.wait();
       console.log(serialiseIdentity(identity));
-      window.localStorage.setItem(surveyAddresses[0], serialiseIdentity(identity));
+      window.localStorage.setItem(_address, serialiseIdentity(identity));
 
       const serialized = serialiseIdentity(identity);
       console.log("Unserialized identity: ", unSerialiseIdentity(serialized));
-      setSurveys(updatedSurveyList);
+    } catch (e) {
+      console.log(e.message);
     }
-  }
-
-  const handleBroadcast = async (surveyAddress, identity) => {
-    console.log(surveyAddress);
-    console.log(identity);
-    const { ethereum } = window;
-
-    if (ethereum) {
-      const provider = new ethers.providers.Web3Provider(ethereum);
-      const signer = provider.getSigner();
-      const surveyContract = new ethers.Contract(surveyAddress, survey.abi, signer);
-      console.log("Getting leaves...");
-      const idCommitments = await surveyContract.getIdentityCommitments();
-      console.log('Leaves:', idCommitments);
-      const en = await surveyContract.getExternalNullifier();
-      console.log("external nullifier", en);
-
-      const cirDef = await 
-        (await fetch("/public/circuit.json"))
-        .json();
-      const circuit = genCircuit(cirDef);
-      console.log("Generating witness...");
-      const result = await genWitness(
-        "test",
-        circuit,
-        // 3 items
-        identity,
-        idCommitments,
-        // from survey creator
-        20,
-        BigInt(en.toString()),
-      )
-      console.log("Complete generating witness"); 
-      console.log("full result: ", result);
-      const witness = result.witness;
-      console.log("Proving...");
-      const provingKey = new Uint8Array(await (await fetch("/public/proving_key.bin")).arrayBuffer());
-      const proof = await genProof(witness, provingKey);
-      console.log("Complete proving", proof);
-
-      const publicSignals = genPublicSignals(witness, circuit);
-      const params = genBroadcastSignalParams(result, proof, publicSignals);
-      console.log("genBroadcastSignalParams: ", params);
-      console.log("Updating survey result...");
-      const tx = await surveyContract.updateSurveyResult(
-        ["q1"],
-        [5],
-        ethers.utils.toUtf8Bytes("test"),
-        params.proof,
-        params.root,
-        params.nullifiersHash
-      );
-      
-      const receipt = await tx.wait();
-      console.log("Complete update survey result...");
-      console.log(receipt);
-    }
+    
+    const value = { address: _address, name: _name, surveyQuestions: _surveyQuestions };
+    setSelectedSurvey(value);
   }
   
   const renderSurveys = () => {
     return surveys.map((survey, index) => {
       return (
-        <li key={index}>
-          <Button onClick={() => handleBroadcast(survey.address, 
-            unSerialiseIdentity(window.localStorage.getItem(survey.address)))}>
-          <span>
-            {survey.name}
-          </span>
-          <span>
-            {survey.address}
-          </span>
-          </Button>
-        </li>
-      )
-    })
+        <List>
+          <ListItem key={index}>
+            <Button onClick={async() => await handleSelectSurvey(survey.address, survey.name)}>
+              {survey.name}
+            </Button>
+          </ListItem>
+        </List>
+      );
+    });
   }
 
   return (
-    <div>
-      <Button onClick={handleSignIn}>Add</Button>
-      Participants View
-      {renderSurveys()}
-    </div>  
+    <>
+      {!selectedSurvey && 
+        <>
+          <Button 
+            onClick={handleSignIn}
+            variant="contained" 
+            color="primary"
+            size="medium"
+            display="inline-block"
+            disabled={loading}
+          >
+            Fetch Surveys
+          </Button>
+          {renderSurveys()}
+        </>
+      }
+      {selectedSurvey && 
+        <SurveyResponsePage 
+          surveyAddress={selectedSurvey.address} 
+          surveyName={selectedSurvey.name}
+          surveyQuestions={selectedSurvey.surveyQuestions}
+          goBack={() => setSelectedSurvey(null)}
+        />
+      }
+    </>  
   );
 }

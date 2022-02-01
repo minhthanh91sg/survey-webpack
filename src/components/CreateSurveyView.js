@@ -12,7 +12,7 @@ import AddIcon from "@material-ui/icons/Add";
 import RemoveIcon from "@material-ui/icons/Remove";
 import React, { useState } from "react";
 import { v4 as uuidv4 } from "uuid";
-import { ContractFactory } from 'ethers';
+import { ContractFactory, ethers } from 'ethers';
 import semaphore from '../contracts/Semaphore.json';
 import survey from '../contracts/Survey.json';
 import platform from '../contracts/Platform.json';
@@ -47,7 +47,9 @@ export const CreateSurveyView = (props) => {
 
   const handleParticipantInput = (event) => {
     const values = event.target.value.split(",");
-    const combined = [...participants, ...values];
+    const trimmedValues = values.map(value => value.trim());
+    console.log("Values: ", trimmedValues);
+    const combined = [...trimmedValues];
     setParticipants(combined);
   }
 
@@ -72,17 +74,17 @@ export const CreateSurveyView = (props) => {
       console.log("deploying survey");
       // questions list
       const questions = inputs.map(input => {
-        return input.question;
+        return input.question.trim();
       });
 
-      const surveyContract = 
-        await surveyFactory.deploy(
-          questions,
-          participants,
-          10000,
-          "test",
-          semaphoreAddress,
-        );
+      const surveyContract = await surveyFactory.deploy(
+        questions,
+        participants,
+        10000,
+        "test",
+        semaphoreAddress,
+      );
+
       console.log("this is survey address", surveyContract.address);
       console.log("transfering ownership");
       await semaphoreContract.transferOwnership(surveyContract.address);
@@ -92,8 +94,11 @@ export const CreateSurveyView = (props) => {
       console.log("add nullifier finish");
       console.log("insert new survey to platform");
       const platformContract = new ethers.Contract(address.Platform, platform.abi, signer);
-      const addSurveyTx = await platformContract.addExistingSurvey(participantAddress, surveyContract.address);
-      await addSurveyTx.wait()
+      console.log("Participant addresses: ", participants);
+      
+      const addSurveyTx = await platformContract.addExistingSurvey(participants, surveyContract.address);
+      await addSurveyTx.wait();
+
       console.log("complete insert new survey");
     }
   };

@@ -9,7 +9,10 @@ import {
   genBroadcastSignalParams,
   unSerialiseIdentity,
 } from "libsemaphore-no-test";
-import { Button } from "@material-ui/core";
+import { Button, FormControl, FormLabel, RadioGroup, FormControlLabel, Radio } from "@material-ui/core";
+import React, { useState } from "react";
+import survey from '../contracts/Survey.json';
+import { ethers } from 'ethers';
 
 export const SurveyResponsePage = (props) => {
   const surveyAddress = props.surveyAddress;
@@ -17,9 +20,40 @@ export const SurveyResponsePage = (props) => {
   const surveyQuestions = props.surveyQuestions;
   const goBack = props.goBack;
 
+  const [selected, setSelected] = useState([]);
+
+  const handleChange = (event, questionIndex) => {
+    const value = event.target.value;
+    let found = false;
+    let newInputs = selected.map(input => {
+      if (questionIndex == input["question"]) {
+        input["answer"] = value;
+        found = true;
+      }
+      return input;
+    });
+    if (!found) {
+      newInputs = [...newInputs, {
+        "question" : questionIndex,
+        "answer" : value,
+      }];
+    }
+    setSelected(newInputs);
+  }
+
+  const order = (inputs) => {
+    inputs.sort((a, b) => {
+      if (a["question"] < b["question"]) return -1;
+      if (a["question"] > b["question"]) return 1;
+      return 0;
+    });
+    return inputs;
+  }
+  console.log("Selected: ", selected);
+
   const handleBroadcast = async () => {
     console.log(surveyAddress);
-    const identity = unSerialiseIdentity(window.localStorage.getItem(survey.address));
+    const identity = unSerialiseIdentity(window.localStorage.getItem(surveyAddress));
     console.log(identity);
     const { ethereum } = window;
 
@@ -37,9 +71,13 @@ export const SurveyResponsePage = (props) => {
         (await fetch("/public/circuit.json"))
         .json();
       const circuit = genCircuit(cirDef);
+
+      const orderList = order(selected).map((input) => input["answer"]);
+      console.log("Order List", orderList);
+      const stringifyOrderList = JSON.stringify(orderList);
       console.log("Generating witness...");
       const result = await genWitness(
-        "test",
+        stringifyOrderList,
         circuit,
         // 3 items
         identity,
@@ -60,22 +98,24 @@ export const SurveyResponsePage = (props) => {
       const params = genBroadcastSignalParams(result, proof, publicSignals);
       console.log("genBroadcastSignalParams: ", params);
       console.log("Updating survey result...");
+      
       const tx = await surveyContract.updateSurveyResult(
-        ["q1"],
-        [5],
-        ethers.utils.toUtf8Bytes("test"),
+        surveyQuestions,
+        orderList,
+        ethers.utils.toUtf8Bytes(stringifyOrderList),
         params.proof,
         params.root,
         params.nullifiersHash
       );
       
       const receipt = await tx.wait();
-      console.log("Questions", questions);
+      console.log("Questions", surveyQuestions);
 
       console.log("Complete update survey result...");
       console.log(receipt);
     }
   }
+
   return (
     <>
       <Button
@@ -84,9 +124,33 @@ export const SurveyResponsePage = (props) => {
         Back to survey selection
       </Button>
       <h1>{surveyName}</h1>
-      {surveyQuestions.map(surveyQuestion => {
-        return <p>{surveyQuestion}</p>
-      })}
+      <FormControl>
+        { surveyQuestions.map((surveyQuestion, index) => {
+          return (
+            <div key={index}>
+              <FormLabel>{surveyQuestion}</FormLabel>
+              <RadioGroup
+                row
+                onChange={ (event) => { handleChange(event, index) } }
+              >
+                <FormControlLabel value="1" control={<Radio color="primary" />} label="1" />
+                <FormControlLabel value="2" control={<Radio color="primary" />} label="2" />
+                <FormControlLabel value="3" control={<Radio color="primary" />} label="3" />
+              </RadioGroup>
+            </div>
+          );
+        }) }
+        <Button
+          variant="contained" 
+          color="primary" 
+          type="submit"
+          onClick={handleBroadcast}
+          size="medium"
+          display="inline-block"
+        >
+          Submit
+        </Button>
+      </FormControl>
     </>
-  )
+  );
 }

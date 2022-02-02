@@ -70,22 +70,25 @@ export const ParticipantView = () => {
     const surveyContract = new ethers.Contract(_address, survey.abi, signer);
     const _surveyQuestions = await surveyContract.getSurveyQuestions();
     // TODO: replace try/catch with backend variable AlreadyInsertedIdentityCommitment
-    try {
-      const identity = genIdentity();
-      console.log(identity);
-      const identityCommitment = genIdentityCommitment(identity);
-      console.log(identityCommitment);
-      const insertIdentityTx = await surveyContract.insertIdentity(identityCommitment);
-      await insertIdentityTx.wait();
-      console.log(serialiseIdentity(identity));
-      window.localStorage.setItem(_address, serialiseIdentity(identity));
-
-      const serialized = serialiseIdentity(identity);
-      console.log("Unserialized identity: ", unSerialiseIdentity(serialized));
-    } catch (e) {
-      console.log(e.message);
+    const insertIdentityStatus = await surveyContract.checkInsertIdentityStatus();
+    if (!insertIdentityStatus) {
+      try {
+        const identity = genIdentity();
+        console.log(identity);
+        const identityCommitment = genIdentityCommitment(identity);
+        console.log(identityCommitment);
+        const insertIdentityTx = await surveyContract.insertIdentity(identityCommitment);
+        await insertIdentityTx.wait();
+        console.log(serialiseIdentity(identity));
+        window.localStorage.setItem(_address, serialiseIdentity(identity));
+  
+        const serialized = serialiseIdentity(identity);
+        console.log("Unserialized identity: ", unSerialiseIdentity(serialized));
+      } catch (e) {
+        console.log(e.message);
+      }
     }
-    
+
     const value = { address: _address, name: _name, surveyQuestions: _surveyQuestions };
     setSelectedSurvey(value);
   }

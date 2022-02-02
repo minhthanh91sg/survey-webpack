@@ -88,10 +88,12 @@ export const CreateSurveyView = (props) => {
       console.log("this is survey address", surveyContract.address);
       console.log("transfering ownership");
       await semaphoreContract.transferOwnership(surveyContract.address);
+
       console.log("finished transfering ownership");
       console.log("add nullifier start");
       await surveyContract.addExternalNullifier();
       console.log("add nullifier finish");
+      
       console.log("insert new survey to platform");
       const platformContract = new ethers.Contract(address.Platform, platform.abi, signer);
       console.log("Participant addresses: ", participants);

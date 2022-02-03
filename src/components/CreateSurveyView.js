@@ -18,13 +18,14 @@ import survey from '../contracts/Survey.json';
 import platform from '../contracts/Platform.json';
 const address = require('../../public/address.json');
 
-export const CreateSurveyView = (props) => {
+export const CreateSurveyView = () => {
   const [inputs, setInputs] = useState([
     { "id": uuidv4(), "question": "" },
   ]);
+  const [surveyName, setSurveyName] = useState("");
   const [participants, setParticipants] = useState([]);
 
-  const handleChange = (id, event) => {
+  const handleChangeOnQuestion = (id, event) => {
     const newInputFields = inputs.map(input => {
       if(id === input.id) {
         input["question"] = event.target.value;
@@ -34,6 +35,13 @@ export const CreateSurveyView = (props) => {
     
     setInputs(newInputFields);
   }
+
+  const handleChangeOnSurveyName = (event) => {
+    const newSurveyName = event.target.value;
+    setSurveyName(newSurveyName);
+  }
+
+  console.log("Survey Name: ", surveyName);
 
   const handleRemoveFields = (index) => {
     const values  = [...inputs];
@@ -80,8 +88,7 @@ export const CreateSurveyView = (props) => {
       const surveyContract = await surveyFactory.deploy(
         questions,
         participants,
-        10000,
-        "test",
+        surveyName,
         semaphoreAddress,
       );
 
@@ -111,6 +118,14 @@ export const CreateSurveyView = (props) => {
         CREATE NEW SURVEY
       </Typography>
       <FormGroup>
+        <TextField   
+          fullWidth
+          name="Survey name"
+          variant="filled"
+          value={surveyName}
+          label="Survey name"
+          onChange={event => handleChangeOnSurveyName(event)}
+        />
         <List>
           { inputs.map((input, index) => (
             <ListItem key={input.id}>            
@@ -121,9 +136,10 @@ export const CreateSurveyView = (props) => {
                 label={`Question ${index + 1}`}
                 variant="filled"
                 value={input.question}
-                onChange={event => handleChange(input.id, event)}
+                onChange={event => handleChangeOnQuestion(input.id, event)}
               />
-              <IconButton onClick={handleAddFields}><AddIcon /></IconButton>
+              <IconButton 
+                onClick={handleAddFields}><AddIcon /></IconButton>
               <IconButton 
                 disabled={inputs.length === 1} 
                 onClick={() => handleRemoveFields(index)}

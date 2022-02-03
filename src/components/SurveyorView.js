@@ -2,7 +2,7 @@ import surveyResultsView from '../contracts/SurveyResultsView.json';
 import platform from '../contracts/Platform.json';
 import { Contract, ethers } from 'ethers';
 const address = require('../../public/address.json');
-import {  
+import {
   Button,
   List,
   ListItem
@@ -80,6 +80,8 @@ export const SurveyorView = () => {
       {!selectedSurvey && 
         <>
           <Button
+            color="primary"
+            variant="contained"
             onClick={handleFetchSurvey}
           >
             Fetch Surveys

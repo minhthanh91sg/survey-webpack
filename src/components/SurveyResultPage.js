@@ -1,14 +1,20 @@
+import {
+  Typography,
+  TableContainer,
+  Table,
+  TableHead,
+  TableBody,
+  TableCell,
+  TableRow
+} from "@material-ui/core";
+
 export const SurveyResultPage = (props) => {
-  const surveyAddress = props.surveyAddress;
-  console.log("survey address", surveyAddress);
   const surveyName = props.surveyName;
-  console.log("survey name", surveyName);
   const surveyResults = props.surveyResults;
-  console.log("Survey Results: ", surveyResults);
+
   const surveyQuestions = surveyResults[0];
-  console.log("surveyQuestions: ", surveyQuestions);
   const surveyScores = surveyResults[1];
-  console.log("surveyScores: ", surveyScores);
+
   const questionToScoreArray = [];
   for (let i = 0; i < surveyQuestions.length; i += 1) {
     questionToScoreArray.push({
@@ -19,16 +25,39 @@ export const SurveyResultPage = (props) => {
   console.log("questionToScoreArray", questionToScoreArray);
   return (
     <div>
-      <span>{surveyAddress}</span>
-      <span>{surveyName}</span>
-      <ul>
-        {questionToScoreArray.map((result, index) => {
-          return (
-            <li key={index}>{result.question} {result.score} </li>
-          )
-        })}
-      </ul>
+      <Typography variant="h2">{surveyName}</Typography>
+      <TableContainer>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell>
+                <Typography variant="h6">
+                  Question
+                </Typography>
+              </TableCell>
+              <TableCell align="center">
+                <Typography variant="h6">
+                  Average Score
+                </Typography>
+              </TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {questionToScoreArray.map((result, index) => {
+              return (
+                <TableRow key={index}>
+                  <TableCell align="left">
+                    <Typography>{result.question}</Typography> 
+                  </TableCell>
+                  <TableCell align="center">
+                    <Typography>{result.score}</Typography>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      </TableContainer>
     </div>
-  )
-  
+  );
 }

@@ -5,7 +5,8 @@ const address = require('../../public/address.json');
 import {
   Button,
   List,
-  ListItem
+  ListItem,
+  Box
 } from "@material-ui/core";
 import { useState } from "react";
 import survey from '../contracts/Survey.json';
@@ -76,7 +77,7 @@ export const SurveyorView = () => {
   }
 
   return (
-    <>
+    <Box sx={{ display: "flex", flexDirection: "column" }}>
       {!selectedSurvey && 
         <>
           <Button
@@ -94,6 +95,6 @@ export const SurveyorView = () => {
         surveyName={selectedSurvey.name}
         surveyResults={selectedSurvey.score}
       /> }
-    </>
+    </Box>
   );
 }

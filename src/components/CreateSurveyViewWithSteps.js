@@ -1,29 +1,84 @@
-import { 
-  TextField, 
-  Button, 
-  Box, 
-  FormGroup, 
-  List, 
-  ListItem,
-  IconButton,
-  Typography
-} from "@material-ui/core";
+import { useState } from 'react';
+import { Box, Stepper, Step, StepButton, Button, Typography, TextField,
+  List, ListItem, IconButton, FormGroup
+} from '@material-ui/core';
 import AddIcon from "@material-ui/icons/Add";
 import RemoveIcon from "@material-ui/icons/Remove";
-import React, { useState } from "react";
+import { makeStyles } from '@material-ui/core/styles';
 import { v4 as uuidv4 } from "uuid";
 import { ContractFactory, ethers } from 'ethers';
 import semaphore from '../contracts/Semaphore.json';
 import survey from '../contracts/Survey.json';
 import platform from '../contracts/Platform.json';
 const address = require('../../public/address.json');
+import { theme } from "../App";
 
-export const CreateSurveyView = () => {
+const steps = ['Enter survey name', 'Add questions', 'Invite participants'];
+const useStyles = makeStyles({
+  form: {
+    height: '100%',
+    padding: '40px',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'space-around',
+    width: '100%'
+  },
+  paper: {
+    backgroundColor: '#A8D0E6',
+    padding: '0'
+  },
+});
+
+
+export const CreateSurveyViewWithSteps = () => {
+  const [activeStep, setActiveStep] = useState(0);
+  const [completed, setCompleted] = useState({});
+
+  const [surveyName, setSurveyName] = useState("");
   const [inputs, setInputs] = useState([
     { "id": uuidv4(), "question": "" },
   ]);
-  const [surveyName, setSurveyName] = useState("");
   const [participants, setParticipants] = useState([]);
+  const classes = useStyles();
+
+  const totalSteps = () => {
+    return steps.length;
+  };
+
+  const completedSteps = () => {
+    return Object.keys(completed).length;
+  };
+
+  const isLastStep = () => {
+    return activeStep === totalSteps() - 1;
+  };
+
+  const allStepsCompleted = () => {
+    return completedSteps() === totalSteps();
+  };
+
+  const handleNext = () => {
+    const newActiveStep =
+      isLastStep() && !allStepsCompleted()
+        ? // It's the last step, but not all steps have been completed,
+          // find the first step that has been completed
+          steps.findIndex((step, i) => !(i in completed))
+        : activeStep + 1;
+    setActiveStep(newActiveStep);
+  };
+
+  const handleBack = () => {
+    setActiveStep((prevActiveStep) => prevActiveStep - 1);
+  };
+
+  const handleStep = (step) => () => {
+    setActiveStep(step);
+  };
+
+  const handleChangeOnSurveyName = (event) => {
+    const newSurveyName = event.target.value;
+    setSurveyName(newSurveyName);
+  }
 
   const handleChangeOnQuestion = (id, event) => {
     const newInputFields = inputs.map(input => {
@@ -36,20 +91,14 @@ export const CreateSurveyView = () => {
     setInputs(newInputFields);
   }
 
-  const handleChangeOnSurveyName = (event) => {
-    const newSurveyName = event.target.value;
-    setSurveyName(newSurveyName);
+  const handleAddFields = () => {
+    setInputs([...inputs, { id: uuidv4(), question: "" }])
   }
-
 
   const handleRemoveFields = (index) => {
     const values  = [...inputs];
     values.splice(index, 1);
     setInputs(values);
-  }
-
-  const handleAddFields = () => {
-    setInputs([...inputs, { id: uuidv4(), question: "" }])
   }
 
   const handleParticipantInput = (event) => {
@@ -112,19 +161,28 @@ export const CreateSurveyView = () => {
   };
 
   return (
-    <Box>
-      <Typography variant="h4">
-        CREATE NEW SURVEY
-      </Typography>
-      <FormGroup>
-        <TextField   
-          fullWidth
+    <FormGroup className={classes.form}>
+      <Stepper activeStep={activeStep} className={classes.paper}>
+        {steps.map((label, index) => (
+          <Step key={label} completed={completed[index]}>
+            <StepButton color="inherit" onClick={handleStep(index)}>
+              {label}
+            </StepButton>
+          </Step>
+        ))}
+      </Stepper>
+      {activeStep + 1 === 1 ? 
+        <TextField
           name="Survey name"
-          variant="filled"
+          fullWidth
+          multiline
+          variant='filled'
           value={surveyName}
           label="Survey name"
           onChange={event => handleChangeOnSurveyName(event)}
-        />
+          className={classes.textField}
+        /> :
+        activeStep + 1 === 2 ?
         <List>
           { inputs.map((input, index) => (
             <ListItem key={input.id}>            
@@ -147,7 +205,8 @@ export const CreateSurveyView = () => {
               </IconButton>
             </ListItem>
           )) }
-        </List>
+        </List> :
+        activeStep + 1 === 3 ?
         <TextField 
           multiline
           fullWidth
@@ -155,18 +214,35 @@ export const CreateSurveyView = () => {
           label="Participants"
           variant="filled"
           onChange={event => handleParticipantInput(event)}
-        />
+        /> :
+        <></>
+      }
+      <Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
         <Button
-          variant="contained" 
-          color="primary" 
-          type="submit"
-          onClick={handleSubmit}
-          size="medium"
-          display="inline-block"
+          color="inherit"
+          disabled={activeStep === 0}
+          onClick={handleBack}
         >
-          Submit
+          Back
         </Button>
-      </FormGroup>
-    </Box>
-  )
+        { activeStep + 1 !== 3 ?
+          <Button 
+            onClick={handleNext}
+          >
+            Next
+          </Button> : <></>
+        }
+        { activeStep + 1 === 3 ?
+          <Button
+            variant="contained" 
+            color="primary" 
+            type="submit"
+            onClick={handleSubmit}
+          >
+            Submit
+          </Button> : <></>
+        }
+      </Box>
+    </FormGroup>
+  );
 }

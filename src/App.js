@@ -1,10 +1,9 @@
 import 'regenerator-runtime/runtime';
 import React, { useState } from 'react';
 import { Button, ThemeProvider, Box, createTheme, Avatar } from '@material-ui/core';
-import { MainMenuPage } from "./components/MainMenuPage.js"
-import { bgcolor } from '@material-ui/system';
+import { MainMenuPage } from "./pages/MainMenuPage.js"
 
-const theme = createTheme({
+export const theme = createTheme({
   typography: {
     "fontFamily": `"Roboto", "Helvetica", "Arial", sans-serif`,
     "fontSize": 14,
@@ -81,19 +80,22 @@ function App() {
     }
     return (
       <ThemeProvider theme={theme}>
-        <Box
-          textAlign="center"
-          sx={{
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "center",
-            alignItems: "center",
-            bgcolor: "secondary.main",
-            height: "100vh",
-          }}
-        >
-          {currentAccount ? <MainMenuPage /> : connectWalletButton()}
-        </Box>
+        { currentAccount ? <MainMenuPage /> :
+          <Box
+            textAlign="center"
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center",
+              alignItems: "center",
+              bgcolor: "secondary.main",
+              height: "100vh",
+              width: 'auto'
+            }}
+          >
+            { connectWalletButton() }
+          </Box>
+        }
       </ThemeProvider>
     )
 }

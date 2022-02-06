@@ -14,7 +14,7 @@ import survey from '../contracts/Survey.json';
 import respondentView from '../contracts/RespondentView.json';
 import platform from '../contracts/Platform.json';
 import { ethers } from 'ethers';
-import { List, Button, ListItem } from "@material-ui/core";
+import { List, Button, ListItem, Box } from "@material-ui/core";
 import { SurveyResponsePage } from "./SurveyResponsePage";
 const address = require('../../public/address.json');
 
@@ -110,7 +110,7 @@ export const ParticipantView = () => {
   return (
     <>
       {!selectedSurvey && 
-        <>
+        <Box sx={{ display: "flex", flexDirection: "column" }}>
           <Button 
             onClick={handleSignIn}
             variant="contained" 
@@ -122,7 +122,7 @@ export const ParticipantView = () => {
             Fetch Surveys
           </Button>
           {renderSurveys()}
-        </>
+        </Box>
       }
       {selectedSurvey && 
         <SurveyResponsePage 

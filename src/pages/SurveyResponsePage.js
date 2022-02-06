@@ -9,7 +9,7 @@ import {
   genBroadcastSignalParams,
   unSerialiseIdentity,
 } from "libsemaphore-no-test";
-import { Button, FormControl, FormLabel, RadioGroup, FormControlLabel, Radio } from "@material-ui/core";
+import { Button, FormControl, FormLabel, RadioGroup, FormControlLabel, Radio, Box } from "@material-ui/core";
 import React, { useState } from "react";
 import survey from '../contracts/Survey.json';
 import { ethers } from 'ethers';
@@ -117,7 +117,7 @@ export const SurveyResponsePage = (props) => {
   }
 
   return (
-    <>
+    <Box sx={{ display: "flex", flexDirection: "column" }}>
       <Button
         onClick={goBack}
       >
@@ -151,6 +151,6 @@ export const SurveyResponsePage = (props) => {
           Submit
         </Button>
       </FormControl>
-    </>
+    </Box>
   );
 }
